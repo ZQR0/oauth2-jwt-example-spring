@@ -1,0 +1,47 @@
+package com.zqr0.auth.clientserver.config;
+
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.security.oauth2.client.OAuth2AuthorizedClient;
+import org.springframework.security.oauth2.client.OAuth2AuthorizedClientManager;
+import org.springframework.security.oauth2.client.OAuth2AuthorizedClientProvider;
+import org.springframework.security.oauth2.client.OAuth2AuthorizedClientProviderBuilder;
+import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
+import org.springframework.security.oauth2.client.web.DefaultOAuth2AuthorizedClientManager;
+import org.springframework.security.oauth2.client.web.OAuth2AuthorizedClientRepository;
+import org.springframework.security.oauth2.client.web.reactive.function.client.ServletOAuth2AuthorizedClientExchangeFilterFunction;
+import org.springframework.web.reactive.function.client.WebClient;
+
+@Configuration
+public class WebClientConfig {
+
+    @Bean
+    public WebClient webClient(OAuth2AuthorizedClientManager authorizedClientManager) {
+        ServletOAuth2AuthorizedClientExchangeFilterFunction oauth2Client =
+                new ServletOAuth2AuthorizedClientExchangeFilterFunction(authorizedClientManager);
+
+        return WebClient.builder()
+                .apply(oauth2Client.oauth2Configuration())
+                .build();
+    }
+
+    @Bean
+    public OAuth2AuthorizedClientManager oAuth2AuthorizedClientManager(
+            ClientRegistrationRepository registrationRepository,
+            OAuth2AuthorizedClientRepository clientRepository
+    )
+    {
+        OAuth2AuthorizedClientProvider oAuth2AuthorizedClientProvider = OAuth2AuthorizedClientProviderBuilder
+                .builder()
+                .authorizationCode()
+                .refreshToken()
+                .build();
+
+        DefaultOAuth2AuthorizedClientManager auth2AuthorizedClientManager = new DefaultOAuth2AuthorizedClientManager(
+                registrationRepository, clientRepository
+        );
+        auth2AuthorizedClientManager.setAuthorizedClientProvider(oAuth2AuthorizedClientProvider);
+
+        return auth2AuthorizedClientManager;
+    }
+}
