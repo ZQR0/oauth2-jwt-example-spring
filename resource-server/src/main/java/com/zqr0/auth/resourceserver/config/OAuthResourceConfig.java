@@ -14,11 +14,9 @@ import com.nimbusds.jose.util.Base64URL;
 import com.nimbusds.jwt.proc.ConfigurableJWTProcessor;
 import com.nimbusds.jwt.proc.DefaultJWTProcessor;
 import com.nimbusds.jwt.proc.JWTProcessor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.PropertySource;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.oauth2.server.resource.OAuth2ResourceServerConfigurer;
@@ -32,15 +30,13 @@ import java.security.interfaces.RSAPrivateKey;
 
 @Configuration
 @EnableWebSecurity
-@Slf4j
-@PropertySource("classpath:application.properties")
 public class OAuthResourceConfig {
 
     private final JWSAlgorithm JWS_ALGORITHM = JWSAlgorithm.RS256;
     private final JWEAlgorithm JWE_ALGORITHM = JWEAlgorithm.RSA_OAEP_256;
     private final EncryptionMethod ENCRYPTION_METHOD = EncryptionMethod.A256GCM;
 
-    @Value(value = "rsa.private.key")
+    @Value(value = "${private.key.location}")
     private RSAPrivateKey key;
 
     @Value(value = "${jwk.set.uri}")
@@ -60,12 +56,12 @@ public class OAuthResourceConfig {
 
     @Bean
     public JwtDecoder jwtDecoder() {
-        return new NimbusJwtDecoder(jwtProcessor());
+        return new NimbusJwtDecoder(this.jwtProcessor());
     }
 
     private JWTProcessor<SecurityContext> jwtProcessor() {
         JWKSource<SecurityContext> jwsJwkSource = new RemoteJWKSet<>(this.JWK_SET_URI);
-        JWSKeySelector<SecurityContext> jwsKeySelector = new JWSVerificationKeySelector<SecurityContext>(this.JWS_ALGORITHM, jwsJwkSource);
+        JWSKeySelector<SecurityContext> jwsKeySelector = new JWSVerificationKeySelector<>(this.JWS_ALGORITHM, jwsJwkSource);
 
         JWKSource<SecurityContext> jwkSource = new ImmutableJWKSet<>(new JWKSet(this.rsaKey()));
         JWEKeySelector<SecurityContext> jweKeySelector = new JWEDecryptionKeySelector<>(this.JWE_ALGORITHM,
