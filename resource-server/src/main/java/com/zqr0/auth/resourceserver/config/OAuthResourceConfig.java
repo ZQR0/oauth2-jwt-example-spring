@@ -14,6 +14,7 @@ import com.nimbusds.jose.util.Base64URL;
 import com.nimbusds.jwt.proc.ConfigurableJWTProcessor;
 import com.nimbusds.jwt.proc.DefaultJWTProcessor;
 import com.nimbusds.jwt.proc.JWTProcessor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -24,12 +25,15 @@ import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.web.SecurityFilterChain;
 
+import java.io.*;
 import java.net.URL;
 import java.security.interfaces.RSAPrivateCrtKey;
 import java.security.interfaces.RSAPrivateKey;
+import java.util.Scanner;
 
 @Configuration
 @EnableWebSecurity
+@Slf4j
 public class OAuthResourceConfig {
 
     private final JWSAlgorithm JWS_ALGORITHM = JWSAlgorithm.RS256;
@@ -37,7 +41,7 @@ public class OAuthResourceConfig {
     private final EncryptionMethod ENCRYPTION_METHOD = EncryptionMethod.A256GCM;
 
     @Value(value = "${private.key.location}")
-    private RSAPrivateKey key;
+    private RSAPrivateKey privateKey;
 
     @Value(value = "${jwk.set.uri}")
     private URL JWK_SET_URI;
@@ -71,16 +75,22 @@ public class OAuthResourceConfig {
         jwtProcessor.setJWSKeySelector(jwsKeySelector);
         jwtProcessor.setJWEKeySelector(jweKeySelector);
 
+        log.info("jwt processor works");
+
         return jwtProcessor;
     }
 
     private RSAKey rsaKey() {
-        RSAPrivateCrtKey privateCrtKey = (RSAPrivateCrtKey) this.key;
-        Base64URL n = Base64URL.encode(privateCrtKey.getModulus());
-        Base64URL e = Base64URL.encode(privateCrtKey.getPublicExponent());
+        //System.out.println(this.source.toString()); = class path resource
 
-        return new RSAKey.Builder(n, e)
-                .privateKey(this.key)
+        //final RSAPrivateKey KEY = this.converter.convert(this.source.toString());
+        RSAPrivateCrtKey privateCrtKey = (RSAPrivateCrtKey) this.privateKey;
+
+        final Base64URL N = Base64URL.encode(privateCrtKey.getModulus());
+        final Base64URL E = Base64URL.encode(privateCrtKey.getPublicExponent());
+
+        return new RSAKey.Builder(N, E)
+                .privateKey(privateCrtKey)
                 .keyUse(KeyUse.ENCRYPTION)
                 .build();
     }
