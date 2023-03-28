@@ -22,7 +22,6 @@ dependencies {
 
 tasks.register('startBoot', GradleBuild) {
     tasks = [
-            'auth-server:bootRun',
             'client-server:bootRun',
             'resource-server:bootRun'
     ]

@@ -1,4 +1,3 @@
 rootProject.name = 'oauth'
 include "resource-server"
-include "auth-server"
 include "client-server"
