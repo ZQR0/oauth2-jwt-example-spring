@@ -1,0 +1,16 @@
+server:
+  port: 8082
+
+spring:
+  cloud:
+    gateway:
+      globalcors:
+        corsConfiguration:
+          allowedMethods:
+            - GET
+            - PUT
+      routes:
+        - id: resources
+          uri: http://resource-server:8083
+          predicates:
+            Path=/messages/*
